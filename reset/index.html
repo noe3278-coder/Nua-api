@@ -54,6 +54,11 @@
   <!-- Supabase JS (CDN) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
+
+const SUPABASE_URL = "https://vleqyirlaamkvkydvkoa.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsZXF5aXJsYWFta3ZreWR2a29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzOTM2ODYsImV4cCI6MjA3MTk2OTY4Nn0.KS30kn7bNr1QwgWwuBc6jWjNzep8FME3q1RaUH4aIJs";
+
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function main() {
