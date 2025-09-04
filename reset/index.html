@@ -1,11 +1,100 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Reset Test</title>
-  </head>
-  <body>
-    <h1>Funciona 🎉</h1>
-    <p>Esta es la página de reset de contraseña.</p>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Restablecer contraseña</title>
+  <style>
+    body {
+      font-family: system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1 { color: #0ea5e9; }
+    input,button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      border: none;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0284c7; }
+    .card {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .muted { opacity: .7; font-size: .9rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Restablecer contraseña</h1>
+  <div class="card">
+    <p id="status">Verificando enlace…</p>
+    <div id="form" style="display:none">
+      <label for="pw">Nueva contraseña</label>
+      <input id="pw" type="password" placeholder="Mínimo 6 caracteres" />
+      <button id="save">Guardar</button>
+      <p class="muted" id="msg"></p>
+    </div>
+  </div>
+
+  <!-- Supabase JS (CDN) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    // 👇 Tus credenciales de Supabase
+    const SUPABASE_URL = "https://vleqyirlaamkvkydvkoa.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsZXF5aXJsYWFta3ZreWR2a29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzOTM2ODYsImV4cCI6MjA3MTk2OTY4Nn0.KS30kn7bNr1QwgWwuBc6jWjNzep8FME3q1RaUH4aIJs";
+
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function main() {
+      const status = document.getElementById('status');
+      const form = document.getElementById('form');
+      const msg = document.getElementById('msg');
+      const pw = document.getElementById('pw');
+      const btn = document.getElementById('save');
+
+      // 1) Canjear el código del email por sesión
+      const { error } = await client.auth.exchangeCodeForSession(window.location.href);
+      if (error) {
+        status.textContent = "❌ Enlace inválido o caducado.";
+        return;
+      }
+
+      status.textContent = "Introduce tu nueva contraseña:";
+      form.style.display = 'block';
+
+      // 2) Actualizar contraseña
+      btn.addEventListener('click', async () => {
+        const newPw = pw.value || "";
+        if (newPw.length < 6) {
+          msg.textContent = "La contraseña debe tener al menos 6 caracteres.";
+          return;
+        }
+        const { error: upErr } = await client.auth.updateUser({ password: newPw });
+        if (upErr) {
+          msg.textContent = "❌ " + (upErr.message || "No se pudo actualizar.");
+        } else {
+          msg.textContent = "✅ Contraseña actualizada. Vuelve a la app e inicia sesión.";
+          pw.value = "";
+        }
+      });
+    }
+    main();
+  </script>
+</body>
 </html>
