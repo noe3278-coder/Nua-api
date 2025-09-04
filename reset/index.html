@@ -53,51 +53,72 @@
 
   <!-- Supabase JS (CDN) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    // 👇 Tus credenciales de Supabase
-    const SUPABASE_URL = "https://vleqyirlaamkvkydvkoa.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsZXF5aXJsYWFta3ZreWR2a29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzOTM2ODYsImV4cCI6MjA3MTk2OTY4Nn0.KS30kn7bNr1QwgWwuBc6jWjNzep8FME3q1RaUH4aIJs";
+<script>
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  async function main() {
+    const status = document.getElementById('status');
+    const form = document.getElementById('form');
+    const msg = document.getElementById('msg');
+    const pw = document.getElementById('pw');
+    const btn = document.getElementById('save');
 
-    async function main() {
-      const status = document.getElementById('status');
-      const form = document.getElementById('form');
-      const msg = document.getElementById('msg');
-      const pw = document.getElementById('pw');
-      const btn = document.getElementById('save');
 
-      // 1) Canjear el código del email por sesión
+    const hash = window.location.hash || "";
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const error_code = params.get("error") || params.get("error_code");
+
+    if (error_code) {
+      const desc = params.get("error_description") || "El enlace ha caducado o ya se usó. Vuelve a solicitarlo desde la app.";
+      status.textContent = "❌ " + decodeURIComponent(desc);
+      return;
+    }
+
+    let exchangeError = null;
+
+    if (access_token && refresh_token) {
+
+      const { error } = await client.auth.setSession({ access_token, refresh_token });
+      exchangeError = error || null;
+    } else {
+
       const { error } = await client.auth.exchangeCodeForSession(window.location.href);
-      if (error) {
-        status.textContent = "❌ Enlace inválido o caducado.";
+      exchangeError = error || null;
+    }
+
+    if (exchangeError) {
+      status.textContent = "❌ Enlace inválido o caducado.";
+      return;
+    }
+
+
+    status.textContent = "Introduce tu nueva contraseña:";
+    form.style.display = "block";
+
+    btn.addEventListener("click", async () => {
+      const newPw = pw.value || "";
+      if (newPw.length < 6) {
+        msg.textContent = "La contraseña debe tener al menos 6 caracteres.";
         return;
       }
+      const { error: upErr } = await client.auth.updateUser({ password: newPw });
+      if (upErr) {
+        msg.textContent = "❌ " + (upErr.message || "No se pudo actualizar.");
+      } else {
+        msg.textContent = "✅ Contraseña actualizada. Vuelve a la app e inicia sesión.";
+        pw.value = "";
+      }
+    });
+  }
 
-      status.textContent = "Introduce tu nueva contraseña:";
-      form.style.display = 'block';
-
-      // 2) Actualizar contraseña
-      btn.addEventListener('click', async () => {
-        const newPw = pw.value || "";
-        if (newPw.length < 6) {
-          msg.textContent = "La contraseña debe tener al menos 6 caracteres.";
-          return;
-        }
-        const { error: upErr } = await client.auth.updateUser({ password: newPw });
-        if (upErr) {
-          msg.textContent = "❌ " + (upErr.message || "No se pudo actualizar.");
-        } else {
-          msg.textContent = "✅ Contraseña actualizada. Vuelve a la app e inicia sesión.";
-          pw.value = "";
-        }
-      });
-    }
-    main();
-    console.log("HREF:", window.location.href);
+  main();
+  
+  console.log("HREF:", window.location.href);
   console.log("SEARCH:", window.location.search);
   console.log("HASH:", window.location.hash);
-  </script>
+
+</script>
 </body>
 </html>
